@@ -6,12 +6,12 @@
 package controller;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Random;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import model.Score;
 
 /**
  *
@@ -31,50 +31,85 @@ public class JSPController extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        /*
-        nb joueurs connectés -> nbPlayers
-        
-        nom joueur -> playerName (si nul, "Anonyme")
-        action -> action
-        proposition -> guess
-        valeur à trouver -> value (à calculer qu'une fois)
-        nombre d'essais -> nbGuesses (à incrémenter)
-        
-        meilleur score -> 
-        */
         String action = request.getParameter("action");
-        
+                
         if(action == null){
-            request.getRequestDispatcher("views/view.jsp").forward(request, response);
+            Object nbPlayers = getServletContext().getAttribute("nbPlayers");
+            if(nbPlayers == null){
+                getServletContext().setAttribute("nbPlayers", 0);
+            }
+            request.getRequestDispatcher("views/login.jsp").forward(request, response);
         }else{           
            switch(action){
                 case "Connexion":{
                     String playerName = request.getParameter("playerName");
-                    request.getSession(true).setAttribute("playerName", playerName);
-                    request.setAttribute("nbGuesses", 0);
+                    
+                    if(playerName.isEmpty()){
+                        request.getSession(true).setAttribute("playerName", "Anonyme");
+                    }else{
+                        request.getSession(true).setAttribute("playerName", playerName);
+                    }
+                    
+                    int nbPlayers = 1 + (int)getServletContext().getAttribute("nbPlayers");
+                    getServletContext().setAttribute("nbPlayers", nbPlayers);
+                    
+                    request.getSession(true).setAttribute("nbGuesses", 0);
                     request.getSession(true).setAttribute("answer", new Random().nextInt(101));
-                    request.getRequestDispatcher("views/jeu.jsp").forward(request, response);
+                    
+                    request.getRequestDispatcher("views/game.jsp").forward(request, response);
                     break;
                 }
 
-                case "Deviner":
-                    String guess = request.getParameter("guess");
-                    System.out.println(guess);
-                    request.getRequestDispatcher("views/jeu.jsp").forward(request, response);
+                case "Deviner":{
+                    int guess = Integer.valueOf(request.getParameter("guess"));
+                    int answer = (int)request.getSession(true).getAttribute("answer");
+                    int nbGuesses = 1 + (int) request.getSession(true).getAttribute("nbGuesses");
+
+                    request.setAttribute("guess", guess);
+                    request.getSession(true).setAttribute("nbGuesses", nbGuesses);
+                    
+                    //System.out.println(guess+" | "+answer+" | "+nbGuesses);
+
+                    
+                    if(guess == answer){
+                        Score highScore = (Score)getServletContext().getAttribute("highScore");
+                        String playerName = (String)request.getSession(true).getAttribute("playerName");
+                        
+                        if(highScore == null || highScore.getNbGuesses()> nbGuesses){
+                            request.setAttribute("isNewRecord", true);
+                            getServletContext().setAttribute("highScore", new Score(playerName, nbGuesses));
+                        }else{
+                            request.setAttribute("isNewRecord", false);
+                        }
+                        
+                        request.getRequestDispatcher("views/endGame.jsp").forward(request, response);
+                    }else{
+                        request.getRequestDispatcher("views/game.jsp").forward(request, response);
+                    }
+                    
                     break;
-                case "Rejouer":
+                }
+                
+                case "Rejouer":{
+                    request.getSession(true).setAttribute("nbGuesses", 0);
+                    request.getSession(true).setAttribute("answer", new Random().nextInt(101));
+                    request.getRequestDispatcher("views/game.jsp").forward(request, response);
                     break;
+                }
+                
                 case "Deconnexion":{
+                    int nbPlayers = -1 + (int)getServletContext().getAttribute("nbPlayers");
+                    getServletContext().setAttribute("nbPlayers", nbPlayers);
+                    
                     request.getSession(true).invalidate();
-                    request.getRequestDispatcher("views/view.jsp").forward(request, response);
+                    request.getRequestDispatcher("views/login.jsp").forward(request, response);
                     break;
                 }
             
             } 
         }
         
-        
-
+       
     }
     
     

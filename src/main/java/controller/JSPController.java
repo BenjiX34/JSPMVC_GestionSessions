@@ -34,25 +34,18 @@ public class JSPController extends HttpServlet {
         String action = request.getParameter("action");
                 
         if(action == null){
-            Object nbPlayers = getServletContext().getAttribute("nbPlayers");
-            if(nbPlayers == null){
-                getServletContext().setAttribute("nbPlayers", 0);
-            }
             request.getRequestDispatcher("views/login.jsp").forward(request, response);
         }else{           
            switch(action){
                 case "Connexion":{
-                    String playerName = request.getParameter("playerName");
+                    String playerName = request.getParameter("playerName").trim();
                     
                     if(playerName.isEmpty()){
                         request.getSession(true).setAttribute("playerName", "Anonyme");
                     }else{
                         request.getSession(true).setAttribute("playerName", playerName);
                     }
-                    
-                    int nbPlayers = 1 + (int)getServletContext().getAttribute("nbPlayers");
-                    getServletContext().setAttribute("nbPlayers", nbPlayers);
-                    
+                                        
                     request.getSession(true).setAttribute("nbGuesses", 0);
                     request.getSession(true).setAttribute("answer", new Random().nextInt(101));
                     
@@ -67,10 +60,7 @@ public class JSPController extends HttpServlet {
 
                     request.setAttribute("guess", guess);
                     request.getSession(true).setAttribute("nbGuesses", nbGuesses);
-                    
-                    //System.out.println(guess+" | "+answer+" | "+nbGuesses);
-
-                    
+                                        
                     if(guess == answer){
                         Score highScore = (Score)getServletContext().getAttribute("highScore");
                         String playerName = (String)request.getSession(true).getAttribute("playerName");
@@ -97,10 +87,7 @@ public class JSPController extends HttpServlet {
                     break;
                 }
                 
-                case "Deconnexion":{
-                    int nbPlayers = -1 + (int)getServletContext().getAttribute("nbPlayers");
-                    getServletContext().setAttribute("nbPlayers", nbPlayers);
-                    
+                case "Deconnexion":{                   
                     request.getSession(true).invalidate();
                     request.getRequestDispatcher("views/login.jsp").forward(request, response);
                     break;

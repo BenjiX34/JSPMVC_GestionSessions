@@ -13,4 +13,8 @@
             30
         </session-timeout>
     </session-config>
+    <listener>
+        <description>Counting connected players</description>
+        <listener-class>controller.CountingPlayers</listener-class>
+    </listener>
 </web-app>

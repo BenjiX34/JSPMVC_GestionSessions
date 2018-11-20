@@ -18,7 +18,13 @@ import model.Score;
  * @author pedago
  */
 public class JSPController extends HttpServlet {
-
+    private Random r = new Random();
+    private Score highScore;
+    
+    private int nbGuesses = 0;
+    private int answer;
+    
+    
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
      * methods.
@@ -45,9 +51,12 @@ public class JSPController extends HttpServlet {
                     }else{
                         request.getSession(true).setAttribute("playerName", playerName);
                     }
-                                        
-                    request.getSession(true).setAttribute("nbGuesses", 0);
-                    request.getSession(true).setAttribute("answer", new Random().nextInt(101));
+                    
+                    nbGuesses = 0;
+                    answer = r.nextInt(101);
+                    
+                    request.getSession(true).setAttribute("nbGuesses", nbGuesses);
+                    request.getSession(true).setAttribute("answer", answer);
                     
                     request.getRequestDispatcher("views/game.jsp").forward(request, response);
                     break;
@@ -55,19 +64,20 @@ public class JSPController extends HttpServlet {
 
                 case "Deviner":{
                     int guess = Integer.valueOf(request.getParameter("guess"));
-                    int answer = (int)request.getSession(true).getAttribute("answer");
-                    int nbGuesses = 1 + (int) request.getSession(true).getAttribute("nbGuesses");
+                    
+                    nbGuesses++;
 
                     request.setAttribute("guess", guess);
                     request.getSession(true).setAttribute("nbGuesses", nbGuesses);
                                         
                     if(guess == answer){
-                        Score highScore = (Score)getServletContext().getAttribute("highScore");
                         String playerName = (String)request.getSession(true).getAttribute("playerName");
                         
                         if(highScore == null || highScore.getNbGuesses()> nbGuesses){
+                            highScore = new Score(playerName, nbGuesses);
+                            
                             request.setAttribute("isNewRecord", true);
-                            getServletContext().setAttribute("highScore", new Score(playerName, nbGuesses));
+                            getServletContext().setAttribute("highScore", highScore);
                         }else{
                             request.setAttribute("isNewRecord", false);
                         }
@@ -81,8 +91,12 @@ public class JSPController extends HttpServlet {
                 }
                 
                 case "Rejouer":{
-                    request.getSession(true).setAttribute("nbGuesses", 0);
-                    request.getSession(true).setAttribute("answer", new Random().nextInt(101));
+                    nbGuesses = 0;
+                    request.getSession(true).setAttribute("nbGuesses", nbGuesses);
+                    
+                    answer = r.nextInt(101);
+                    request.getSession(true).setAttribute("answer", answer);
+                    
                     request.getRequestDispatcher("views/game.jsp").forward(request, response);
                     break;
                 }
